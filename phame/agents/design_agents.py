@@ -1,9 +1,9 @@
-from pydantic_ai import Agent
+from pydantic_ai import Agent, RunContext
 from typing import Callable, List
 
 from phame.llm.basemodels import DesignCode, DesignPlan, DesignCodeCritic, DesignPlanCritic
-from utils import _build_openai_model
-
+from phame.llm.utils import _build_openai_model
+from phame.agents.utils import SolidworksExampleDeps, CadGenAgentDeps
 
 def build_design_plan_agent(model_name: str, api_key: str, base_url: str) -> Agent[DesignPlan]:
     model = _build_openai_model(model_name=model_name, api_key=api_key, base_url=base_url)
@@ -43,25 +43,42 @@ def build_design_critic_agent(model_name: str, api_key: str, base_url: str) -> A
     )
     return agent
 
-def build_cad_agent(model_name: str, api_key: str, base_url: str) -> Agent[DesignCode]:
+def build_solidworks_macro_agent(model_name: str, api_key: str, base_url: str) -> Agent[DesignCode]:
     model = _build_openai_model(model_name=model_name, api_key=api_key, base_url=base_url)
     agent = Agent[DesignCode](
         model,
+        deps_type=SolidworksExampleDeps,
         output_type=DesignCode,
         system_prompt=(
             "You are a senior mechanical engineer producing SolidWorks Macro Code in Python enabled with the win32com package.\n"
             "Requirements:\n"
+            "- You MUST follow the patterns from examples from the tool `get_example_macros`. Prefer their structure, naming, and error handling.\n"
+            "- Never use `swPart = swApp.NewPart()` in the script.  \n"
+            "     Instead Use: \n"
+            "       template_path = 'C:\\\\ProgramData\\\\SOLIDWORKS\\\\SOLIDWORKS 2024\\\\templates\\\\Part.prtdot'\n"
+            "       swApp.NewDocument(template_path, 0, 0, 0)\n"
             "- Prefer simple, robust geometry.\n"
             "- Prefer easier manufacturability.\n"
             "- Keep rationale brief (<=3 bullets). No step-by-step reasoning.\n"
             "- Include holes for fasteners if needed.\n"
             "- Code must include a line enabling updating graphics.\n"
-            "- Code must include a line enabling exporting of design as a .SLDPRT file."
+            "- Code must include a line enabling exporting of design as a .SLDPRT file.\n"
+            "\n\n"
+            "As an independent task, you can return a printout of the reference macros in deps upon request using `get_example_macros`."
         ),
     )
+    
+    @agent.tool
+    def get_example_macros(ctx: RunContext[SolidworksExampleDeps]) -> str:
+        # You can return a combined blob, or you could return structured list.
+        print(" Getting example macros...\n")
+        examples = ctx.deps.load_examples_text()
+        # print(examples)
+        return examples
+    
     return agent
 
-def build_cad_critic_agent(model_name: str, api_key: str, base_url: str) -> Agent[DesignCodeCritic]:
+def build_solidworks_macro_critic_agent(model_name: str, api_key: str, base_url: str) -> Agent[DesignCodeCritic]:
     model = _build_openai_model(model_name=model_name, api_key=api_key, base_url=base_url)
     agent = Agent[DesignCodeCritic](
         model,
@@ -81,6 +98,34 @@ def build_cad_critic_agent(model_name: str, api_key: str, base_url: str) -> Agen
         ),
     )
     return agent
+
+def build_cadquery_macro_agent(model_name: str, api_key: str, base_url: str) -> Agent[DesignCode]:
+    model = _build_openai_model(model_name=model_name, api_key=api_key, base_url=base_url)
+    agent = Agent[DesignCode](
+        model,
+        deps_type= CadGenAgentDeps,
+        output_type=DesignCode,
+        system_prompt=(
+            "You are a senior mechanical engineer producing CADQuery code.\n"
+            "Requirements:\n"
+            "- Prefer simple, robust geometry.\n"
+            "- Keep rationale brief (<=3 bullets). No step-by-step reasoning.\n"
+            "- Include holes for fasteners if needed."
+            "- Code must include a line for exporting the model to an stl file."
+            "- Output must be a valid JSON"
+        ),
+    )
+    
+    # @agent.tool
+    # def get_example_macros(ctx: RunContext[MacroExampleDeps]) -> str:
+    #     # You can return a combined blob, or you could return structured list.
+    #     print(" Getting example macros...\n")
+    #     examples = ctx.deps.load_examples_text()
+    #     # print(examples)
+    #     return examples
+    
+    return agent
+
 
 async def generate_design_plan(
     agent: Agent[DesignPlan],

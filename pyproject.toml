@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 
 # Your runtime dependencies
 dependencies = [
+    "cadquery",
     "chromadb",
     "chroma-haystack",
     "datasets>=2.6.1",

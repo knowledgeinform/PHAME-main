@@ -1,7 +1,7 @@
-from phame.agents.design_agents import build_cad_agent, generate_part_with_k_past_work_and_plan
+from phame.agents.design_agents import build_solidworks_macro_agent, generate_part_with_k_past_work_and_plan
 from phame.agents.design_agents import build_design_plan_agent, generate_design_plan
 from phame.agents.design_agents import build_design_critic_agent, generate_design_plan_critique
-from phame.agents.design_agents import build_cad_critic_agent, generate_cad_code_critique
+from phame.agents.design_agents import build_solidworks_macro_critic_agent, generate_cad_code_critique
 from argparse import ArgumentParser
 import os
 import json
@@ -100,7 +100,7 @@ def main():
     Step 3. PyAnsys coding of design
     """
 
-    code_agent = build_cad_agent(model, api_key, base_url)
+    code_agent = build_solidworks_macro_agent(model, api_key, base_url)
     tmp = f'Requesting code of design from {model}.'
     print("".join(['/' for _ in range(len(tmp))]))
     print(tmp)
@@ -133,7 +133,7 @@ def main():
 
     # remove issues and rationale and fix
 
-    code_critic = build_cad_critic_agent(model, api_key, base_url)
+    code_critic = build_solidworks_macro_critic_agent(model, api_key, base_url)
 
     tmp = f'Requesting review of code from {model}.'
     print("".join(['/' for _ in range(len(tmp))]))

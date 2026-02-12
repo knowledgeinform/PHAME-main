@@ -18,6 +18,10 @@ OR
 If you would rather work with venvs read the directions in install-venv-requirments.sh
 
 ```
+sudo apt install wget build-essential libssl-dev libffi-dev tmux zlib1g-dev -y
+git clone git@gitlab.jhuapl.edu:phame/PHAME-PG.git
+cd PHAME-PG
+sudo apt install python3.12-venv
 /usr/bin/python3.12 -m venv .venv
 source ./.venv/bin/activate
 pip install -e .
@@ -34,7 +38,7 @@ git clone git@gitlab.jhuapl.edu:phame/PHAME-PG.git
 cd PHAME-PG
 py -3.12 -m venv .venv
 .venv\Scripts\activate
-python -m pip install --upgrade pip setuptools wheel
+python -m pip install --timeout 300 --upgrade pip setuptools wheel
 pip install -e . --timeout 300
 ```
 
